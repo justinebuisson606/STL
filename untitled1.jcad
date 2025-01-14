@@ -1,0 +1,114 @@
+{
+  "metadata": {},
+  "objects": [
+    {
+      "name": "Sphere 1",
+      "parameters": {
+        "Angle1": -90.0,
+        "Angle2": 90.0,
+        "Angle3": 360.0,
+        "Placement": {
+          "Angle": 0.0,
+          "Axis": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Position": [
+            -0.5,
+            0.0,
+            0.0
+          ]
+        },
+        "Radius": 1.0
+      },
+      "shape": "Part::Sphere",
+      "shapeMetadata": {
+        "centerOfMass": [
+          -0.5,
+          7.30886874224034e-18,
+          2.6020852139652103e-18
+        ],
+        "mass": 4.188790204786391,
+        "matrixOfInertia": [
+          [
+            -7.352473124165942e-34,
+            -7.159851835870065e-35,
+            1.6755160819145563
+          ],
+          [
+            1.6755160819145563,
+            1.1527596698896376e-16,
+            -7.352473124165942e-34
+          ],
+          [
+            1.1527596698896376e-16,
+            1.6755160819145567,
+            -7.159851835870065e-35
+          ]
+        ]
+      },
+      "visible": true
+    },
+    {
+      "name": "Box 1",
+      "parameters": {
+        "Height": 1.5,
+        "Length": 1.5,
+        "Placement": {
+          "Angle": 0.0,
+          "Axis": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "Position": [
+            -1.0,
+            -1.0,
+            -1.0
+          ]
+        },
+        "Width": 1.5
+      },
+      "shape": "Part::Box",
+      "shapeMetadata": {
+        "centerOfMass": [
+          -0.25,
+          -0.25,
+          -0.25
+        ],
+        "mass": 3.375,
+        "matrixOfInertia": [
+          [
+            0.0,
+            0.0,
+            1.2656250000000009
+          ],
+          [
+            1.2656250000000009,
+            0.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.265625,
+            0.0
+          ]
+        ]
+      },
+      "visible": true
+    }
+  ],
+  "options": {
+    "guidata": {
+      "Box 1": {
+        "visibility": true
+      },
+      "Sphere 1": {
+        "visibility": true
+      }
+    }
+  },
+  "outputs": {},
+  "schemaVersion": "3.0.0"
+}

@@ -6,7 +6,7 @@ app = marimo.App()
 
 @app.cell
 def __(mo):
-    mo.md("""#3D Geometry File Formats""")
+    mo.md("""6#3D Geometry File Formats""")
     return
 
 
@@ -72,9 +72,121 @@ def __(mo):
 
 
 @app.cell
+def __(show):
+    # les sommets
+    vertices = [
+        (-0.5, -0.5, -0.5),
+        (0.5, -0.5, -0.5),
+        (0.5, 0.5, -0.5),
+        (-0.5, 0.5, -0.5),
+        (-0.5, -0.5, 0.5),
+        (0.5, -0.5, 0.5),
+        (0.5, 0.5, 0.5),
+        (-0.5, 0.5, 0.5),
+    ]
+
+    # les faces, à chaque fois deux triangles pour chaque face
+    faces = [
+        # devant
+        (0, 1, 2, 0, 0, -1),
+        (0, 2, 3, 0, 0, -1),
+
+        # derrière
+        (4, 5, 6, 0, 0, 1),
+        (4, 6, 7, 0, 0, 1),
+
+        # gauche
+        (0, 3, 7, -1, 0, 0),
+        (0, 7, 4, -1, 0, 0),
+
+        # droite
+        (1, 5, 6, 1, 0, 0),
+        (1, 6, 2, 1, 0, 0),
+
+        # haut
+        (3, 2, 6, 0, 1, 0),
+        (3, 6, 7, 0, 1, 0),
+
+        # bas
+        (0, 1, 5, 0, -1, 0),
+        (0, 5, 4, 0, -1, 0),
+    ]
+
+
+    def create_cube_stl(filename):
+        with open(filename, 'w') as file:
+            file.write("solid cube\n")
+            for face in faces:
+                v1, v2, v3, nx, ny, nz = face
+                file.write(f"facet normal {nx} {ny} {nz}\n")
+                file.write("  outer loop\n")
+                file.write(f"    vertex {vertices[v1][0]} {vertices[v1][1]} {vertices[v1][2]}\n")
+                file.write(f"    vertex {vertices[v2][0]} {vertices[v2][1]} {vertices[v2][2]}\n")
+                file.write(f"    vertex {vertices[v3][0]} {vertices[v3][1]} {vertices[v3][2]}\n")
+                file.write("  endloop\n")
+                file.write("endfacet\n")
+            file.write("endsolid cube\n")
+
+    # Create the STL file for the cube
+    create_cube_stl("data/cube.stl")
+    show("data/cube.stl", theta=45.0, phi=10.0, scale=1)
+
+    return create_cube_stl, faces, vertices
+
+
+@app.cell
 def __(mo):
     mo.md(r"""## STL & NumPy""")
     return
+
+
+@app.cell
+def __(np):
+    def normale(A, B, C):
+        A = np.array(A)
+        B = np.array(B)
+        C = np.array(C)
+
+        # en suivant la règle de la main droite et en normalisant le vecteur normal
+        AB = B - A
+        AC = C - A
+        normale = np.cross(AB, AC)
+        norme = np.linalg.norm(normale)
+        if norme != 0:
+            normale = normale / norme
+
+        return normale
+
+    def make_STL(triangles, normals= None, name = ""):
+        solid = "solid" + name
+        n = len(triangles)
+        for k in range (n):
+            solid = solid +"\n \t facet normal "
+            # on s'occupe de la normale 
+            if normals == None : 
+                n = normale(triangles[k][0],triangles[k][1],triangles[k][2])
+                for x in n:
+                    solid = solid + " " + str(x)
+            else : 
+                for x in normals[k]:
+                    solid = solid + " " + str(x)
+            solid += "\n \t \t outer loop "
+            for l in triangles[k]:
+                l = [str(x) for x in l ]
+                solid = solid + "\n \t \t \t vertex " + " ".join(l)
+
+            solid += " \n \t \t end of loop "
+            solid += " \n \t endfacet "
+        solid += "\n endsolid " + name
+        
+        return solid
+    file = make_STL( [
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+            [[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]],
+        ],None, )
+
+    print(file)
+    return file, make_STL, normale
 
 
 @app.cell
@@ -147,6 +259,32 @@ def __(mo):
 
 
 @app.cell
+def __(np):
+    def tokenize(stl):
+        lines = stl.split("\n")
+        tok = []
+        for x in lines : 
+            l = x.split(" ")
+            for el in l : 
+                if el != '':
+                    if '.' in el : 
+                        tok.append(np.float32(el))
+                    else :
+                        tok.append(el)
+        return tok
+
+
+    with open("data/square.stl", mode="rt", encoding="us-ascii") as square_file:
+        square_stl = square_file.read()
+    tokens = tokenize(square_stl)
+
+
+    if tokens == ['solid', 'square', 'facet', 'normal', np.float32(0.0), np.float32(0.0), np.float32(1.0), 'outer', 'loop', 'vertex', np.float32(0.0), np.float32(0.0), np.float32(0.0), 'vertex', np.float32(1.0), np.float32(0.0), np.float32(0.0), 'vertex', np.float32(0.0), np.float32(1.0), np.float32(0.0), 'endloop', 'endfacet', 'facet', 'normal', np.float32(0.0), np.float32(0.0), np.float32(1.0), 'outer', 'loop', 'vertex', np.float32(1.0), np.float32(1.0), np.float32(0.0), 'vertex', np.float32(0.0), np.float32(1.0), np.float32(0.0), 'vertex', np.float32(1.0), np.float32(0.0), np.float32(0.0), 'endloop', 'endfacet', 'endsolid', 'square']: 
+        print("fonction réussie")
+    return square_file, square_stl, tokenize, tokens
+
+
+@app.cell
 def __(mo):
     mo.md(
         """
@@ -190,6 +328,35 @@ def __(mo):
         """
     )
     return
+
+
+@app.cell
+def __(np, tokens):
+    def parse(tokens):
+        normals = []
+        triangles = []
+        name = tokens[1]
+        k = 0
+        while k < len(tokens) : 
+            if tokens[k] == 'normal':
+                normals.append(tokens[k+1:k+4])
+                k = k+3
+            if tokens[k] == 'loop' :
+                triangles.append([tokens[k+2:k+5],tokens[k+6:k+9],tokens[k+10:k+13]])
+                k=k+12
+            k+=1
+
+        normals = np.array(normals, dtype = np.float32)
+        triangles = np.array(triangles, dtype = np.float32)
+
+
+        return triangles, normals, name
+
+    triangles, normals, name = parse(tokens)
+    print(repr(triangles))
+    print(repr(normals))
+    print(repr(name))
+    return name, normals, parse, triangles
 
 
 @app.cell
@@ -290,6 +457,106 @@ def __(mo):
 
 
 @app.cell
+def __(parse, teapot_stl, tokenize):
+    def pos_octant(stl):
+        triangles, normals, name = parse(tokenize(stl))
+
+        octant = True
+        v = []
+        s = 0
+        for l in triangles : 
+            for x in l :
+                for e in x : 
+                    if e not in v:
+                        v.append(e)
+                        if e <0:
+                            s+=1
+                            octant = False 
+        return octant, f"pourcentage de violation de la règle : {100*s/len(v)}%"
+
+    print(pos_octant(teapot_stl))
+    return (pos_octant,)
+
+
+@app.cell
+def __(np, parse, teapot_stl, tokenize):
+    def orientation_rule(stl):
+        triangles, normals, name = parse(tokenize(stl))
+        orientation = True
+        s = 0
+        for n in normals: 
+            if abs(np.linalg.norm(n)-1) > 10e-8 :
+                s+=1
+                orientation = False
+        return orientation, f"pourcentage de violation de la règle : {100*s/len(normals)} %"
+
+    print(orientation_rule(teapot_stl))
+    return (orientation_rule,)
+
+
+@app.cell
+def __():
+    print({1,0} == {0,1})
+    return
+
+
+@app.cell
+def __(parse, teapot_stl, tokenize):
+    from collections import Counter
+    def edges_of_triangle(triangle):
+
+        edges = {tuple(sorted([tuple(triangle[i]), tuple(triangle[(i + 1) % 3])]))
+            for i in range(3)}
+        return edges
+
+
+    def shared_edge_rule(stl):
+        s = 0
+        shared = True 
+        triangles, normals, name = parse(tokenize(stl))
+
+        edge_counter = Counter()
+
+        # Loop over each triangle in the list of triangles.
+        for triangle in triangles:
+            edges = edges_of_triangle(triangle)
+            edge_counter.update(edges)
+
+        # Check if each edge appears exactly twice.
+        for edge, count in edge_counter.items():
+            if count != 2:
+                shared = False 
+                s+=1 
+
+        return shared, f"pourcentage de violation de la règle : {100*s/len(edge_counter)}%"
+
+    print(shared_edge_rule(teapot_stl))
+    return Counter, edges_of_triangle, shared_edge_rule
+
+
+@app.cell
+def __(parse, teapot_stl, tokenize):
+    def ascending_rule(stl):
+        triangles, normals, name = parse(tokenize(stl))
+        ascending = True
+        s= 0 
+
+        a,b,c = triangles[0]
+        z_moy = (a[-1]+b[-1]+c[-1])/3
+        for tri in triangles : 
+            if (tri[0][-1]+tri[1][-1]+tri[2][-1])/3 >= z_moy : 
+                z_moy = (tri[0][-1]+tri[1][-1]+tri[2][-1])/3
+            else : 
+                z_moy = (tri[0][-1]+tri[1][-1]+tri[2][-1])/3
+                s+=1
+                ascending = False
+        return ascending, f"pourcentage de violation de la règle : {100*s/len(triangles)}%"
+
+    print(ascending_rule(teapot_stl))
+    return (ascending_rule,)
+
+
+@app.cell
 def __(mo):
     mo.md(
     rf"""
@@ -336,6 +603,29 @@ def __(mo):
         """
     )
     return
+
+
+@app.cell
+def __(make_STL, np):
+    def OBJ_to_STL(obj):
+        vertices = []
+        triangles = []
+        l_obj = obj.split("\n")
+        for k in range (len(l_obj)):
+            if len(l_obj[k]) !=0:  
+                if l_obj[k][0] == "v": # on identifie de cette manière si c'est une vertice
+                    v = l_obj[k].split(" ")
+                    vertices.append(np.float32(v[1:]))
+                elif l_obj[k][0] == "f": # et de cette manière on identifie si c'est une face
+                    f = l_obj[k].split(" ")
+                    triangles.append( [vertices[int(f[1])-1],vertices[int(f[2])-1],vertices[int(f[3])-1]])
+        return make_STL(triangles, None, "bunny")
+
+    with open("data/bunny.obj", mode="rt", encoding="us-ascii") as bunny_file:
+        bunny_obj = bunny_file.read()
+    bunny_STL = OBJ_to_STL(bunny_obj)
+    print(bunny_STL[:200])
+    return OBJ_to_STL, bunny_STL, bunny_file, bunny_obj
 
 
 @app.cell
@@ -429,9 +719,9 @@ def __(
             box(1.5),
         ),
         union(
-            orient(cylinder(0.5), [1.0, 0.0, 0.0]),
-            orient(cylinder(0.5), [0.0, 1.0, 0.0]),
-            orient(cylinder(0.5), [0.0, 0.0, 1.0]),
+            orient(cylinder(0.25), [1.0, 0.0, 0.0]),
+            orient(cylinder(0.25), [0.0, 1.0, 0.0]),
+            orient(cylinder(0.25), [0.0, 0.0, 1.0]),
         ),
     )
     demo_csg_alt.save("output/demo-csg-alt.stl", step=0.05)
@@ -440,6 +730,11 @@ def __(
 
 
 @app.cell
+def __():
+    return
+
+
+@app.cell(hide_code=True)
 def __(mo):
     mo.md(
         rf"""
@@ -459,6 +754,65 @@ def __(mo):
         """
     )
     return
+
+
+@app.cell
+def __(
+    box,
+    cylinder,
+    difference,
+    intersection,
+    orient,
+    sphere,
+    trimesh,
+    union,
+):
+    def jcad_to_stl(file):
+        csg = dict()
+        csg["inter"]= []
+        csg["union"]= []
+        csg["diff"]= []
+        for obj in file["objects"]:
+            if obj["name"].startswith("Box"):
+                l = obj["Height"]
+                ax = obj["Axis"]
+                csg[obj["name"]] = orient(box(l),ax)
+            elif obj["name"].startswith("Cylinder"):
+                ax = obj["Axis"]
+                r = obj["Height"]
+                csg[obj["name"]] = orient(cylinder(r),ax)
+            elif obj["name"].startswith("Sphere"):
+                r = obj["Radius"]
+                csg[obj["name"]] = orient(sphere(r),ax)
+            elif obj["name"].startswith("Intersection"):
+                csg["inter"].append(obj["dependencies"])
+            elif obj["name"].startswith("Union"):
+                csg["Union"].append(obj["dependencies"])
+            elif obj["name"].startswith("Difference"):
+                csg["diff"].append(obj["dependencies"])
+
+        csg_file = None
+        for obj in csg.values() : 
+            if csg_file != None : 
+                break
+            csg_file = obj
+
+        for l in csg["inter"]: 
+            csg_file = union(csg_file, intersection(csg[l[0]]),csg[l[1]])
+        for l in csg["union"]: 
+            csg_file = union(csg_file, union(csg[l[0]]),csg[l[1]])
+        for l in csg["diff"]: 
+            csg_file = union(csg_file, difference(csg[l[0]]),csg[l[1]])
+
+        mesh = csg_file.to_mesh()
+        mesh_trimesh = trimesh.Trimesh(vertices=mesh.vertices, faces=mesh.faces)
+
+        # Sauvegarder le maillage en fichier STL
+        mesh_trimesh.export(str(file)+'.stl')
+        
+
+    jcad_to_stl("untitled2.jcad")
+    return (jcad_to_stl,)
 
 
 @app.cell
@@ -524,6 +878,12 @@ def __():
 
 
 @app.cell
+def __(sdf):
+    help(sdf.box)
+    return
+
+
+@app.cell
 def __(mo):
     mo.md(r"""### STL Viewer""")
     return
@@ -564,7 +924,7 @@ def __(Camera, Mesh, glm, meshio, mo, plt):
 
 @app.cell
 def __(mo, show):
-    mo.show_code(show("data/teapot.stl", theta=45.0, phi=30.0, scale=2))
+    mo.show_code(show("data/teapot.stl", theta=55.0, phi=30.0, scale=2))
     return
 
 
